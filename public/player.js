@@ -7,6 +7,11 @@ window.onSpotifyWebPlaybackSDKReady = () => {
     return console.warn('config.spotify_access_token not here')
   }
 
+  // access_token expiration warning
+  setTimeout(() => {
+    console.warn('Spotify access_token should now be expired. Maybe a good idea to `GET /oauth/refresh` it.')
+  }, config.spotify_expires_in * 1000);
+
   //
   // Create a Spotify player instance
   // https://developer.spotify.com/documentation/web-playback-sdk/reference/

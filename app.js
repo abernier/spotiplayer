@@ -25,7 +25,7 @@ app.use(function (req, res, next) {
   //
   res.locals.config = {}
   res.locals.config.spotify_access_token = req.session.spotify_access_token
-  res.locals.config.spotify_expires_at = req.session.spotify_expires_at
+  res.locals.config.spotify_expires_in = req.session.spotify_expires_at && (req.session.spotify_expires_at - new Date().getTime()) / 1000
 
   next()
 })
