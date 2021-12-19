@@ -1,0 +1,11 @@
+<h1>Spotiplayer</h1>
+
+{{#if config.spotify_access_token}}
+    <ul>
+        <li>spotify:track:7xGfFoTpQ2E7fRF5lN10tr</li>
+    </ul>
+    <button id="resume">Resume</button> <button id="pause">Pause</button>
+{{else}}
+    <a href="/oauth">Authorize Spotify</a>
+{{/if}}
+
