@@ -3,12 +3,15 @@ require("dotenv").config();
 const express = require("express");
 const session = require('express-session')
 const hbs = require("hbs");
+const morgan = require('morgan')
 
 const app = express();
 app.set("view engine", "hbs");
 hbs.registerHelper("json", ctx => JSON.stringify(ctx)); // {{{json }}} helper
 
 app.use(express.static("public"));
+
+app.use(morgan('tiny'))
 
 app.use(session({
   secret: 'shhhhhhht',
@@ -22,6 +25,7 @@ app.use(function (req, res, next) {
   //
   res.locals.config = {}
   res.locals.config.spotify_access_token = req.session.spotify_access_token
+  res.locals.config.spotify_expires_at = req.session.spotify_expires_at
 
   next()
 })

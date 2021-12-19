@@ -19,19 +19,23 @@ router.get("/oauth", (req, res, next) => {
 
 router.get("/oauth/callback", (req, res, next) => {
   const { code, state } = req.query;
-  console.log("code=", code);
+  // console.log("code=", code);
 
   spotifyApi
     .authorizationCodeGrant(code)
     .then(function (data) {
-      console.log("The token expires in " + data.body["expires_in"]);
-      console.log("The access token is " + data.body["access_token"]);
-      console.log("The refresh token is " + data.body["refresh_token"]);
+      console.log('Spotify oauth:', data.body)
+      // console.log("The token expires in " + data.body["expires_in"]);
+      // console.log("The access token is " + data.body["access_token"]);
+      // console.log("The refresh token is " + data.body["refresh_token"]);
 
       spotifyApi.setAccessToken(data.body["access_token"]);
       spotifyApi.setRefreshToken(data.body["refresh_token"]);
 
       req.session.spotify_access_token = data.body["access_token"];
+      req.session.spotify_expires_at = new Date().getTime() + data.body["expires_in"]*1000 // ms epoch
+      req.session.spotify_refresh_token = data.body["refresh_token"];
+      
       res.redirect("/");
     })
     .catch(function (err) {
@@ -39,5 +43,38 @@ router.get("/oauth/callback", (req, res, next) => {
       next(err);
     });
 });
+
+function refreshAccessTokenIfNeeded(req, res, next) {
+  const expired = new Date().getTime() > req.session.spotify_expires_at
+
+  if (req.session.spotify_access_token && expired) {
+    console.log('`req.session.spotify_access_token` is now expired, let refresh it!')
+
+    spotifyApi.refreshAccessToken()
+      .then(function (data) {
+        // Update infos to session
+        req.session.spotify_access_token = data.body["access_token"];
+        req.session.spotify_expires_at = new Date().getTime() + data.body["expires_in"]*1000 // ms epoch
+
+        next()
+      })
+      .catch(err => {
+        console.error('Could not refresh the token!', err);
+
+        next(err)
+      })
+  } else {
+    // no need to refresh: either no one or not yet expired => skip
+    next()
+  }
+}
+router.refreshAccessTokenIfNeeded = refreshAccessTokenIfNeeded
+
+router.get('/oauth/refresh', refreshAccessTokenIfNeeded, (req, res, next) => {
+  res.json({
+    access_token: req.session.spotify_access_token,
+    expires_at: req.session.spotify_expires_at,
+  })
+})
 
 module.exports = router;

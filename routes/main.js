@@ -3,7 +3,9 @@ const router = express.Router()
 
 const spotifyApi = require('../spotifyapi')
 
-router.get("/", (req, res, next) => {
+const { refreshAccessTokenIfNeeded } = require('./oauth')
+
+router.get("/", refreshAccessTokenIfNeeded, (req, res, next) => {
   res.render("index.hbs")
 })
 
