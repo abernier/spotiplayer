@@ -16,10 +16,30 @@ window.onSpotifyWebPlaybackSDKReady = () => {
   // Create a Spotify player instance
   // https://developer.spotify.com/documentation/web-playback-sdk/reference/
   //
+  let firstTime = true
   const player = new Spotify.Player({
     name: 'Web Playback SDK Quick Start Player',
     getOAuthToken: cb => {
-      cb(config.spotify.access_token)
+      console.log('getOAuthToken', firstTime)
+
+      if (firstTime) {
+        cb(config.spotify.access_token) // read the `access_token` from window.config the `firstTime`
+        firstTime = false
+      } else {
+        // Otherwise, fetch a refreshed one
+        fetch('/oauth/refresh')
+          .then(response => response.json())
+          .then(json => {
+            const {access_token, expires_in} = json
+
+            // update global window.config.spotify object
+            config.spotify.access_token = access_token
+            config.spotify.expires_in = expires_in
+
+            cb(access_token)
+          })
+          .catch(console.error)
+      }
     },
     volume: 0.5
   });

@@ -73,7 +73,7 @@ router.refreshAccessTokenIfNeeded = refreshAccessTokenIfNeeded
 router.get('/oauth/refresh', refreshAccessTokenIfNeeded, (req, res, next) => {
   res.json({
     access_token: req.session.spotify.access_token,
-    expires_at: req.session.spotify.expires_at,
+    expires_in: req.session.spotify.expires_at && (req.session.spotify.expires_at - new Date().getTime()) / 1000
   })
 })
 
