@@ -32,9 +32,9 @@ router.get("/oauth/callback", (req, res, next) => {
       spotifyApi.setAccessToken(data.body["access_token"]);
       spotifyApi.setRefreshToken(data.body["refresh_token"]);
 
-      req.session.spotify_access_token = data.body["access_token"];
-      req.session.spotify_expires_at = new Date().getTime() + data.body["expires_in"]*1000 // ms epoch
-      req.session.spotify_refresh_token = data.body["refresh_token"];
+      req.session.spotify.access_token = data.body["access_token"];
+      req.session.spotify.expires_at = new Date().getTime() + data.body["expires_in"]*1000 // ms epoch
+      req.session.spotify.refresh_token = data.body["refresh_token"];
       
       res.redirect("/");
     })
@@ -45,16 +45,16 @@ router.get("/oauth/callback", (req, res, next) => {
 });
 
 function refreshAccessTokenIfNeeded(req, res, next) {
-  const expired = new Date().getTime() > req.session.spotify_expires_at
+  const expired = new Date().getTime() > req.session.spotify.expires_at
 
-  if (req.session.spotify_access_token && expired) {
+  if (req.session.spotify.access_token && expired) {
     console.log('`req.session.spotify_access_token` is now expired, let refresh it!')
 
     spotifyApi.refreshAccessToken()
       .then(function (data) {
         // Update infos to session
-        req.session.spotify_access_token = data.body["access_token"];
-        req.session.spotify_expires_at = new Date().getTime() + data.body["expires_in"]*1000 // ms epoch
+        req.session.spotify.access_token = data.body["access_token"];
+        req.session.spotify.expires_at = new Date().getTime() + data.body["expires_in"]*1000 // ms epoch
 
         next()
       })
@@ -72,8 +72,8 @@ router.refreshAccessTokenIfNeeded = refreshAccessTokenIfNeeded
 
 router.get('/oauth/refresh', refreshAccessTokenIfNeeded, (req, res, next) => {
   res.json({
-    access_token: req.session.spotify_access_token,
-    expires_at: req.session.spotify_expires_at,
+    access_token: req.session.spotify.access_token,
+    expires_at: req.session.spotify.expires_at,
   })
 })
 

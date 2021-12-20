@@ -20,12 +20,28 @@ app.use(session({
 }))
 
 app.use(function (req, res, next) {
-  //
-  // We define here a `config` variable that will be available in every template (see: https://expressjs.com/fr/api.html#res.locals)
-  //
-  res.locals.config = {}
-  res.locals.config.spotify_access_token = req.session.spotify_access_token
-  res.locals.config.spotify_expires_in = req.session.spotify_expires_at && (req.session.spotify_expires_at - new Date().getTime()) / 1000
+  // Create a req.session.spotify object if doesn't exist
+  req.session.spotify ??= {}
+
+  // Create a `config` locals where its `spotify` prop points to (a proxied of) `req.session.spotify`
+  res.locals.config = {
+    spotify: new Proxy(req.session.spotify, {
+      get: function (target, prop, receiver) {
+        if (['refresh_token', 'expires_at'].includes(prop)) return; // hide some props
+        
+        return Reflect.get(...arguments); // untouch other props
+      }
+    })
+  }
+
+  // Add a `expires_in` getter prop
+  Object.defineProperty(res.locals.config.spotify, 'expires_in', {
+    enumerable: true,
+    get() {
+      // computed from `req.session.spotify.expires_at`
+      return req.session.spotify.expires_at && (req.session.spotify.expires_at - new Date().getTime()) / 1000
+    }
+  })
 
   next()
 })

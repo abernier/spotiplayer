@@ -3,14 +3,14 @@ window.onSpotifyWebPlaybackSDKReady = () => {
   console.log('onSpotifyWebPlaybackSDKReady')
 
   // check we have an access_token (in global `config` var)
-  if (!config.spotify_access_token) {
-    return console.warn('config.spotify_access_token not here')
+  if (!config.spotify.access_token) {
+    return console.warn('config.spotify.access_token not here')
   }
 
   // access_token expiration warning
   setTimeout(() => {
     console.warn('Spotify access_token should now be expired. Maybe a good idea to `GET /oauth/refresh` it.')
-  }, config.spotify_expires_in * 1000);
+  }, config.spotify.expires_in * 1000);
 
   //
   // Create a Spotify player instance
@@ -19,16 +19,17 @@ window.onSpotifyWebPlaybackSDKReady = () => {
   const player = new Spotify.Player({
     name: 'Web Playback SDK Quick Start Player',
     getOAuthToken: cb => {
-      cb(config.spotify_access_token)
+      cb(config.spotify.access_token)
     },
     volume: 0.5
   });
   globalThis.player = player // make a global `player` variable
 
-  player.addListener('ready', ({ device_id }) => {
+  player.addListener('ready', e => {
     //
     // Once device created
     //
+    const { device_id } = e
 
     console.log('ready', device_id);
 
@@ -41,7 +42,7 @@ window.onSpotifyWebPlaybackSDKReady = () => {
       body: JSON.stringify({ uris: songs }),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.spotify_access_token}`
+        'Authorization': `Bearer ${config.spotify.access_token}`
       },
     });
 
@@ -50,17 +51,17 @@ window.onSpotifyWebPlaybackSDKReady = () => {
   //
   // debug
   //
-  player.addListener('not_ready', ({ device_id }) => {
-    console.log('not_ready', device_id);
+  player.addListener('not_ready', e => {
+    console.log('not_ready', e);
   });
-  player.addListener('initialization_error', ({ message }) => { 
-      console.error('initialization_error', message);
+  player.addListener('initialization_error', e => { 
+      console.error('initialization_error', e);
   });
-  player.addListener('authentication_error', ({ message }) => {
-      console.error('authentication_error', message);
+  player.addListener('authentication_error', e => {
+      console.error('authentication_error', e);
   });
-  player.addListener('account_error', ({ message }) => {
-      console.error('account_error', message);
+  player.addListener('account_error', e => {
+      console.error('account_error', e);
   });
 
   // Let's connect our player
